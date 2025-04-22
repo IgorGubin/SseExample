@@ -4,7 +4,7 @@ Example to demonstrate a test case with a problem when using sse technology
 # Question for the developer of server sent events 
 https://learn.microsoft.com/en-us/answers/questions/2259365/problem-sending-events-by-server-if-more-than-one
 
-# Test case of problem
+# Test case of the problem
 1) publish client and server applications
 2) deploy the client's sse console application, in a folder for example C:\MS\SSE\client
 3) run the server application in visual studio
