@@ -1,0 +1,5 @@
+{
+  "srvApiUrl": "http://localhost:7080/api",
+
+  "WaitFileFromServerTimeoutMin": "15"
+}

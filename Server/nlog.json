@@ -1,0 +1,78 @@
+{
+  "nlog": {
+    "extensions": [
+      { "assembly": "NLog.Extensions.Logging" }
+    ],
+    "default-wrapper": {
+      "type": "AsyncWrapper",
+      "overflowAction": "Block"
+    },
+    "autoReload": true,
+    "throwConfigExceptions": true,
+    "throwExceptions": false,
+    "internalLogLevel": "Error",
+    "internalLogFile": "${basedir}/logs/nlog-internal.log",
+    "targets": {
+      "logfile": {
+        "type": "File",
+        "layout": "${date}|${level:uppercase=true}|${callsite}|${callsite-linenumber}|${message} ${exception:format=tostring}",
+        "encoding": "utf-8",
+        "keepFileOpen": true,
+        "fileName": "${basedir}/logs/sse-server.log",
+        "archiveEvery": "Hour",
+        "archiveNumbering": "Date",
+        "maxArchiveDays": 30,
+        "maxArchiveFiles": 30,
+        "archiveFileName": "${basedir}/logs/sse-server-{#}.log"
+      },
+      "logconsole": {
+        "type": "LimitingWrapper",
+        "interval": "00:00:01",
+        "messageLimit": 300,
+        "target": {
+          "type": "ColoredConsole",
+          "layout": "${date}|${level:uppercase=true}|${callsite}|${callsite-linenumber}|${message} ${exception:format=tostring}",
+          "rowHighlightingRules": [
+            {
+              "condition": "level == LogLevel.Trace",
+              "foregroundColor": "Gray"
+            },
+            {
+              "condition": "level == LogLevel.Debug",
+              "foregroundColor": "White"
+            },
+            {
+              "condition": "level == LogLevel.Info",
+              "foregroundColor": "Green"
+            },
+            {
+              "condition": "level == LogLevel.Warn",
+              "foregroundColor": "Magenta"
+            },
+            {
+              "condition": "level == LogLevel.Error",
+              "foregroundColor": "Red"
+            },
+            {
+              "condition": "level == LogLevel.Fatal",
+              "foregroundColor": "Red",
+              "backgroundColor": "White"
+            }
+          ]
+        }
+      }
+    },
+    "rules": [
+      {
+        "writeTo": "logfile",
+        "logger": "*",
+        "minlevel": "Trace"
+      },
+      {
+        "writeTo": "logconsole",
+        "logger": "*",
+        "minlevel": "Trace"
+      }
+    ]
+  }
+}
