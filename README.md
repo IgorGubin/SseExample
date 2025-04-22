@@ -13,5 +13,7 @@ https://learn.microsoft.com/en-us/answers/questions/2259365/problem-sending-even
 - actual behavior: At some point only one of the clients receives messages for itself and for the other client, while the other client does not receive the messages it expects and remains in the waiting state forever. And vice versa. This leads both clients to the blocking state.
 - expected behavior: each client's console application receives all server event messages, selects those from them by eventId that relate to its session, processes them and waits for the next events.
 
+![Figure 1](sse_problem.png)
+
 # Conclusion
 The area of ​​acceptable use of the technology is to launch no more than one process with an SSE client on the windows computer, to exclude cases of work in different processes of clients accessing the same SSE server URL.
