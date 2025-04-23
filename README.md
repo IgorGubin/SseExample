@@ -1,6 +1,9 @@
 # SseExample
 Example to demonstrate a test case with a problem when using sse technology
 
+# Question for the developer of server sent events 
+https://github.com/dotnet/runtime/issues/114923
+
 # Test case of the problem
 1) publish client and server applications
 2) deploy the client's sse console application, in a folder for example C:\MS\SSE\client
