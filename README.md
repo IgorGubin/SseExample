@@ -2,7 +2,7 @@
 Example to demonstrate a test case with a problem when using sse technology
 
 # Question for the developer of server sent events 
-[runtime/issues/114923](https://github.com/dotnet/runtime/issues/114923)
+[dotnet/runtime/issues/114923](https://github.com/dotnet/runtime/issues/114923)
 
 # Test case of the problem
 1) publish client and server applications
