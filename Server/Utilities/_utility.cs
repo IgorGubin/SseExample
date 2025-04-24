@@ -41,7 +41,7 @@ namespace Server.Utilities
                         }
                         else
                         {
-                            Logger.Error(ex, $"\r\nОшибка после {i} попыток.\r\n");
+                            Logger.Error(ex, $"\r\nError after {i} attempts.\r\n");
 
                             if (tryIfEx)
                             {
