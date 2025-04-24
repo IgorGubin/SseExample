@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration.Json;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
+using Server.Model;
 
 namespace Server.Utilities
 {
@@ -16,15 +18,17 @@ namespace Server.Utilities
 
             Url = cfg["Url"];
 
-            ConsumptionMaxParallelDegree = int.TryParse(cfg["ConsumptionMaxParallelDegree"], out int tmp) ? tmp : Environment.ProcessorCount;
-            WaitWhenAnyMs = int.TryParse(cfg["WaitWhenAnyMs"], out tmp) ? tmp : 500;
+            WaitPeriodMs = int.TryParse(cfg["WaitPeriodMs"], out int tmp) ? tmp : 2000;
+
+            SessionDataList = cfg.GetSection("data").Get<List<SessionData>>();
         }
 
         public static string Url { get; private set; }
 
-        public static int ConsumptionMaxParallelDegree { get; private set; }
+        public static int WaitPeriodMs { get; private set; }
 
-        public static int WaitWhenAnyMs { get; private set; }
+        public static List<SessionData>? SessionDataList { get; private set; }
+
 
         public static IConfigurationSection GetNlogConfiguration()
         {

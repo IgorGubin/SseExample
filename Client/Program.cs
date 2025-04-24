@@ -15,8 +15,6 @@ namespace Client
 
         private static async Task Main(string[] args)
         {
-            //Console.ReadLine();
-
             var retCode = 0;
 
             LogManager.ResumeLogging();
@@ -32,13 +30,13 @@ namespace Client
             {
                 Logger.Info($"\r\n{new string('=', 33)}" 
                           + $"\r\nUrl: \"{_cfg.SrvApiUrl}\""
-                          + $"\r\nSessionId: \"{_cfg.ClientSessionId}\""
+                          + $"\r\nSessionId: \"{_cfg.SessionData.SessionId}\""
                           + $"\r\nWaitFileFromServerTimeoutMin: \"{_cfg.WaitFileFromServerTimeoutMin}\""
                           + $"\r\n{new string('=', 33)}");
 
                 var taskStatePolling = WebClientApiSse.StatePolling(_cfg.SrvApiUrl, cancelationTokenSource.Token);
 
-                retCode = await WebClientApiSse.Do(_cfg.ClientSessionId, _cfg.SrvApiUrl, cancelationTokenSource.Token);
+                retCode = await WebClientApiSse.Do(_cfg.SessionData.SessionId, _cfg.SrvApiUrl, cancelationTokenSource.Token);
             }
             catch (Exception ex)
             {

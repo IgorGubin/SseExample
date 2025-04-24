@@ -28,4 +28,8 @@
     <PackageReference Include="NLog.Web.AspNetCore" Version="5.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Processing\" />
+  </ItemGroup>
+
 </Project>

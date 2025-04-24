@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Client.Model;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 
 namespace Client.Utilities
@@ -13,16 +14,20 @@ namespace Client.Utilities
 
             SrvApiUrl = cfg["srvApiUrl"];
 
-            ClientSessionId = Guid.NewGuid().ToString("N");
+            WaitFileFromServerTimeoutMin = int.TryParse(cfg["waitFileFromServerTimeoutMin"], out int tmp) ? tmp : 15;
 
-            WaitFileFromServerTimeoutMin = int.TryParse(cfg["WaitFileFromServerTimeoutMin"], out int tmp) ? tmp : 15;
+            var curSessionId = cfg["curSessionId"];
+
+            var sessionDataList = cfg.GetSection("data").Get<List<SessionData>>();
+
+            SessionData = sessionDataList.FirstOrDefault(i => i.SessionId == curSessionId);
         }
 
         public static string? SrvApiUrl { get; private set; }
 
-        public static string ClientSessionId { get; private set; }
-
         public static int WaitFileFromServerTimeoutMin { get; private set; }
+
+        public static SessionData? SessionData { get; private set; }
 
         public static IConfigurationSection GetNlogConfiguration()
         {

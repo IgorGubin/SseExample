@@ -10,7 +10,7 @@ namespace Client.Model
 
         public override string ToString()
         {
-            return $"Id: \"{FileId}\"; State: {State}";
+            return $"FileId: \"{FileId}\"; State: {State}";
         }
     }
 }

@@ -17,7 +17,7 @@ namespace Client.Processing
 
         private static ConcurrentDictionary<string, FileCardStateEnum> _waitStates = new ConcurrentDictionary<string, FileCardStateEnum>();
 
-        private static string _pref = $"\r\n>>> Sessionid: \"{_cfg.ClientSessionId}\" ";
+        private static string _pref = $"\r\n>>> Sessionid: \"{_cfg.SessionData.SessionId}\" ";
 
         /// <summary>
         /// Main alhorithm
@@ -33,28 +33,22 @@ namespace Client.Processing
 
             using (var client = new HttpClient())
             {
-                var sessionData = new {sessionId = _cfg.ClientSessionId, files = new List<string>()};
-                #region [Upload]
-                Logger.Info($"{_pref} - upload simulate - Start {{ ---");
-                var srvUploadUrl = srvApiUrl + "/upload";
-                for (var i = 0; i < 50; i++)
+                #region [Upload action execution simulation]
+                //Logger.Info($"{_pref} - upload simulate - Start {{ ---");
+                for (var i = 0; i < _cfg.SessionData.Files.Count; i++)
                 {
-                    var fileId = Guid.NewGuid().ToString("N");
-                    sessionData.files.Add(fileId);
+                    var fileId = _cfg.SessionData.Files[i];
                     _waitStates.TryAdd(fileId, FileCardStateEnum.Nothing);
                 }
-
-                using var data = JsonContent.Create(sessionData);
-                var response = await client.PostAsync(srvUploadUrl, data);
-                response.EnsureSuccessStatusCode();
-                Logger.Info($"{_pref} - upload simulate - End }} ---");
-                #endregion [Upload]
+                //Logger.Info($"{_pref} - upload simulate - End }} ---");
+                #endregion [Upload action execution simulation]
 
                 await Parallel.ForEachAsync(_waitStates.Keys.ToArray(), parallelOptions, async (fid, token) =>
                 {
                     var fileState = FileCardStateEnum.Nothing;
-                    #region [State]
-                    Logger.Info($"{_pref} - file {fid} - state waiting - Start {{ ---");
+
+                    #region [Wait Completed file state]
+                    //Logger.Info($"{_pref} - file {fid} - state waiting - Start {{ ---");
                     try
                     {
                         var startWaiting = DateTime.Now;
@@ -65,12 +59,12 @@ namespace Client.Processing
                             { // success
                                 fileState = _waitStates[fid];
                                 startWaiting = DateTime.Now;
-                                Logger.Info($"State of file {fid} changed on: \"{fileState}\".");
+                                Logger.Info($"{_pref} --- State of file {fid} changed on: \"{fileState}\".");
                             }
                             else if ((DateTime.Now - startWaiting).TotalSeconds > waitFileFromServerTimeoutSec)
                             { // timeout
-                                Logger.Error($"Waiting limit of file {fid} exceeded.");
-                                return;
+                                Logger.Error($"{_pref} --- Waiting limit of file {fid} exceeded.");
+                                return; // out from current file processing step
                             }
                             Task.Delay(200).Wait();
                         }
@@ -79,33 +73,12 @@ namespace Client.Processing
                     {
                         _waitStates.TryRemove(fid, out _);
                     }
-                    Logger.Info($"{_pref} - file {fid} - state waiting - End }} ---");
-                    #endregion [State]
+                    //Logger.Info($"{_pref} - file {fid} - state waiting - End }} ---");
+                    #endregion [Wait Completed file state]
 
-                    if (fileState == FileCardStateEnum.Сompleted)
-                    {
-                        #region [Download]
-                        Logger.Info($"{_pref} - file {fid} - download simulate - Start {{ ---");
-                        var srvDownlUrl = srvApiUrl + $"/download/{fid}";
-                        using (var resp = await client.GetAsync(srvDownlUrl, HttpCompletionOption.ResponseHeadersRead))
-                        {
-                            resp.EnsureSuccessStatusCode();
-                            using (var respStream = await resp.Content.ReadAsStreamAsync())
-                            {
-                                
-                            }
-                            resp.Content = null;
-                        }
-                        Logger.Info($"{_pref} - file {fid} - download simulate - End }} ---");
-                        #endregion [Download]
-
-                        #region [Delete]
-                        Logger.Info($"{_pref} - file {fid} - delete simulate - Start {{ ---");
-                        var srvDeleteUrl = srvApiUrl + $"/delete/{fid}";
-                        await client.DeleteAsync(srvDownlUrl);
-                        Logger.Info($"{_pref} - file {fid} - delete simulate - End }} ---");
-                        #endregion [Delete]
-                    }
+                    #region [Another actions execution designation]
+                    //Logger.Info($"{_pref} - Actions execution designation to download and delete a file {fid} after changed it state on Complete...");
+                    #endregion [Another actions execution designation]
                 });
 
             }
@@ -119,6 +92,7 @@ namespace Client.Processing
         {
             var task = Task.Factory.StartNew(async () => {
                 var srvStatesUrl = srvApiUrl + "/states";
+                var clientSessionId = _cfg.SessionData.SessionId;
 
                 using var client = new HttpClient();
                 using var stream = await client.GetStreamAsync(srvStatesUrl);
@@ -138,9 +112,8 @@ namespace Client.Processing
                     }
                     if (item.Data != null)
                     {
-                        Logger.Info($"{_pref} - got data [EventId: {item.EventId}; EventType: {item.EventType}]: {item.Data};");
                         var sessionId = item.EventId;
-                        if (sessionId == _cfg.ClientSessionId)
+                        if (sessionId == clientSessionId)
                         {
                             var fileId = item.Data.FileId;
                             if (_waitStates.TryGetValue(fileId, out var curState))
@@ -148,9 +121,13 @@ namespace Client.Processing
                                 if (curState != item.Data.State)
                                 {
                                     _waitStates[fileId] = item.Data.State;
-                                    Logger.Info($"{_pref} - file \"{fileId}\" - state changed: {curState} -> {item.Data.State};");
+                                    //Logger.Info($"{_pref} - file \"{fileId}\" - state changed: {curState} -> {item.Data.State};");
                                 }
                             }
+                        }
+                        else
+                        { // output only what we catch
+                            Logger.Info($"{_pref} - got data:\r\nEventId: \"{item.EventId}\";\r\nEventType: \"{item.EventType}\";\r\nEventData: {{{item.Data}}};");
                         }
                     }
                 }
