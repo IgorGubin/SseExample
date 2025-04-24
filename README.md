@@ -9,7 +9,8 @@ Simplified example from branch main to demonstrate a test case with a problem wh
 2) deploy the client's sse console application, in two folders for example 
    - C:\MS\SSE\client1
    - C:\MS\SSE\client2
-   In config.json file in each of clients installfolder set different value to parameter curSessionId from variants: "4380109fac434ffb9ecf195f321c6226", "6dc8964913e84131a1100db093a05866".
+     
+   >In config.json file in each of clients installfolder set different value to parameter curSessionId from variants: "4380109fac434ffb9ecf195f321c6226", "6dc8964913e84131a1100db093a05866".
 4) run the server application in visual studio for step by step debugging
 5) start two cmd.exe processes and in these processes run the client's console applications C:\MS\SSE\client1\Client.exe and C:\MS\SSE\client2\Client.exe one after another
 6) sooner or later both clients will stop at the waiting step because the following will happen
