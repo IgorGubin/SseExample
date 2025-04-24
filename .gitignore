@@ -9,3 +9,5 @@
 /Server/obj
 *.user
 *.log
+/Client/Properties/PublishProfiles/FolderProfile.pubxml.user
+/Server/Properties/PublishProfiles/FolderProfile.pubxml.user
