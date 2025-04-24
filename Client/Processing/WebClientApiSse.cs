@@ -34,13 +34,17 @@ namespace Client.Processing
             using (var client = new HttpClient())
             {
                 #region [Upload action execution simulation]
-                //Logger.Info($"{_pref} - upload simulate - Start {{ ---");
+
+                Logger.Info($"{_pref} - upload simulate for sessionId {_cfg.SessionData.SessionId} - Start {{ ---");
                 for (var i = 0; i < _cfg.SessionData.Files.Count; i++)
                 {
                     var fileId = _cfg.SessionData.Files[i];
                     _waitStates.TryAdd(fileId, FileCardStateEnum.Nothing);
                 }
-                //Logger.Info($"{_pref} - upload simulate - End }} ---");
+
+                var srvUploadurl = $"{srvApiUrl}/upload/{_cfg.SessionData.SessionId}";
+                using var stream = await client.GetAsync(srvUploadurl);
+                Logger.Info($"{_pref} - upload simulate for sessionId {_cfg.SessionData.SessionId} - End }} ---");
                 #endregion [Upload action execution simulation]
 
                 await Parallel.ForEachAsync(_waitStates.Keys.ToArray(), parallelOptions, async (fid, token) =>

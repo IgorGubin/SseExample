@@ -21,15 +21,6 @@ namespace Server.Processing
         /// <returns></returns>
         internal static async Task HandleAsync(CancellationToken token)
         {
-            foreach (var sd in _cfg.SessionDataList)
-            { // Designation of the upload files result
-                foreach (var fid in sd.Files)
-                {
-                    var fc = new FileCard(sd.SessionId, fid, FileCardStateEnum.New);
-                    TotalFileCardCatalog.TryAdd(fid, fc);
-                }
-            }
-
             await new TaskFactory().StartNew(async () =>
             { // Simulation of files processing
                 while (!token.IsCancellationRequested)
