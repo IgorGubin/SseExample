@@ -118,7 +118,7 @@ namespace Client.Processing
         )
         {
             var task = Task.Factory.StartNew(async () => {
-                var srvStatesUrl = srvApiUrl + "/states";
+                var srvStatesUrl = srvApiUrl + $"/states/{_cfg.ClientSessionId}";
 
                 using var client = new HttpClient();
                 using var stream = await client.GetStreamAsync(srvStatesUrl);
@@ -138,7 +138,7 @@ namespace Client.Processing
                     }
                     if (item.Data != null)
                     {
-                        Logger.Info($"{_pref} - got data [EventId: {item.EventId}; EventType: {item.EventType}]: {item.Data};");
+                        Logger.Info($"{_pref} - got data:\r\nEventId: {item.EventId};\r\nEventType: {item.EventType}];\r\nEventData: {{{item.Data}}};");
                         var sessionId = item.EventId;
                         if (sessionId == _cfg.ClientSessionId)
                         {
