@@ -5,7 +5,7 @@
 /.vs
 /Client/bin
 /Client/obj
-*.user
-*.log
 /Server/bin
 /Server/obj
+*.user
+*.log
