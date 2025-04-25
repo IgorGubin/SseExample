@@ -127,7 +127,7 @@ namespace Server.Controllers
                         await WriteEvent(this.Response, fc.SessionId, new StateInfo(fc.FileId, historyState));
                     }
                 }
-                Task.Delay(200).Wait();
+                await Task.Delay(200);
             }
         }
     }

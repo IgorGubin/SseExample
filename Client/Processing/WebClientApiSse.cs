@@ -97,7 +97,7 @@ namespace Client.Processing
                                 //return;
                                 break;
                             }
-                            Task.Delay(200).Wait();
+                            await Task.Delay(200);
                         }
                     }
                     finally
