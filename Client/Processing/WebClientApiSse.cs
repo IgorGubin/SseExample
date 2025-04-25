@@ -17,7 +17,12 @@ namespace Client.Processing
 
         private static ConcurrentDictionary<string, FileCardStateEnum> _waitStates = new ConcurrentDictionary<string, FileCardStateEnum>();
 
-        private static string _pref = $"\r\n>>> Sessionid: \"{_cfg.ClientSessionId}\" ";
+        private static string _pref = $"\r\n>>> Sessionid: \"{_cfg.ClientSessionId}\"";
+
+        private static JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         /// <summary>
         /// Main alhorithm
@@ -45,16 +50,35 @@ namespace Client.Processing
                 }
 
                 using var data = JsonContent.Create(sessionData);
-                var response = await client.PostAsync(srvUploadUrl, data);
-                response.EnsureSuccessStatusCode();
+                using (var resp = await client.PostAsync(srvUploadUrl, data))
+                {
+                    try
+                    {
+                        resp.EnsureSuccessStatusCode();
+                        var countString = await resp.Content.ReadAsStringAsync();
+                        var filesRecivedCount = int.TryParse(countString, out int tmpInt) ? tmpInt : 0;
+                        Logger.Info($"{_pref} - successfully uploaded {filesRecivedCount} files.");
+                    }
+                    catch (Exception ex)
+                    { 
+                        Logger.Error(ex);
+                    }
+                    finally
+                    {
+                        resp.Content = null;
+                    }
+                }
                 Logger.Info($"{_pref} - upload simulate - End }} ---");
                 #endregion [Upload]
 
-                await Parallel.ForEachAsync(_waitStates.Keys.ToArray(), parallelOptions, async (fid, token) =>
+                //await Parallel.ForEachAsync(_waitStates.Keys.ToArray(), parallelOptions, async (fid, token) =>
+                foreach (var fid in _waitStates.Keys.ToArray())
                 {
+                    if (token.IsCancellationRequested)
+                        break;
+
                     var fileState = FileCardStateEnum.Nothing;
                     #region [State]
-                    Logger.Info($"{_pref} - file {fid} - state waiting - Start {{ ---");
                     try
                     {
                         var startWaiting = DateTime.Now;
@@ -65,12 +89,13 @@ namespace Client.Processing
                             { // success
                                 fileState = _waitStates[fid];
                                 startWaiting = DateTime.Now;
-                                Logger.Info($"State of file {fid} changed on: \"{fileState}\".");
+                                Logger.Info($"{_pref} - State of file {fid} changed on: \"{fileState}\".");
                             }
                             else if ((DateTime.Now - startWaiting).TotalSeconds > waitFileFromServerTimeoutSec)
                             { // timeout
-                                Logger.Error($"Waiting limit of file {fid} exceeded.");
-                                return;
+                                Logger.Error($"{_pref} - Waiting limit of file {fid} exceeded.");
+                                //return;
+                                break;
                             }
                             Task.Delay(200).Wait();
                         }
@@ -79,7 +104,6 @@ namespace Client.Processing
                     {
                         _waitStates.TryRemove(fid, out _);
                     }
-                    Logger.Info($"{_pref} - file {fid} - state waiting - End }} ---");
                     #endregion [State]
 
                     if (fileState == FileCardStateEnum.Сompleted)
@@ -94,8 +118,8 @@ namespace Client.Processing
                                 var jsonString = await resp.Content.ReadAsStringAsync();
                                 if (jsonString != null)
                                 {
-                                    var stateInfo = JsonSerializer.Deserialize<StateInfo>(jsonString);
-                                    Logger.Info($"{_pref} - successfuly downloaded file: {stateInfo}");
+                                    var stateInfo = JsonSerializer.Deserialize<StateInfo>(jsonString, _jsonOptions);
+                                    Logger.Info($"{_pref} - successfully downloaded file: {stateInfo}");
                                 }
                             }
                             catch (Exception ex)
@@ -119,8 +143,8 @@ namespace Client.Processing
                                 var jsonString = await resp.Content.ReadAsStringAsync();
                                 if (jsonString != null)
                                 {
-                                    var stateInfo = JsonSerializer.Deserialize<StateInfo>(jsonString);
-                                    Logger.Info($"{_pref} - successfuly deleted file: {stateInfo}");
+                                    var stateInfo = JsonSerializer.Deserialize<StateInfo>(jsonString, _jsonOptions);
+                                    Logger.Info($"{_pref} - successfully deleted file: {stateInfo}");
                                 }
                             }
                             catch (Exception ex)
@@ -134,8 +158,8 @@ namespace Client.Processing
                         }
                         #endregion [Delete]
                     }
-                });
-
+                    //}, token);
+                }
             }
             return retCode;
         }
@@ -175,13 +199,13 @@ namespace Client.Processing
                                 if (curState != item.Data.State)
                                 {
                                     _waitStates[fileId] = item.Data.State;
-                                    Logger.Info($"{_pref} - file \"{fileId}\" - state changed: {curState} -> {item.Data.State};");
+                                    Logger.Info($"{_pref} --- File \"{fileId}\" - state changed: {curState} -> {item.Data.State};");
                                 }
                             }
                         }
                         else
                         {
-                            Logger.Info($"{_pref} - Error got data from another session:\r\nEventId: {item.EventId};\r\nEventType: {item.EventType}];\r\nEventData: {{{item.Data}}};");
+                            Logger.Info($"{_pref} --- Error got data from another session:\r\nEventId: {item.EventId};\r\nEventType: {item.EventType}];\r\nEventData: {{{item.Data}}};");
                         }
                     }
                 }

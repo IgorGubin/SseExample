@@ -65,12 +65,13 @@ namespace Server.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult Download(string id)
         {
-            Logger.Info($"download ({id})");
+            Logger.Info($"Download file {id} / [rest files: {Conveyor.TotalFileCardCatalog.Count}]");
             StateInfo? res = null;
             if (Conveyor.TotalFileCardCatalog.TryGetValue(id, out var fileCard))
             {
                 res = fileCard?.StateInfo;
             }
+            
             return res == null ? NotFound() : Ok(res);
         }
 
@@ -84,12 +85,12 @@ namespace Server.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult Delete(string id)
         {
-            Logger.Info($"delete ({id})");
             StateInfo? res = null;
             if (Conveyor.TotalFileCardCatalog.TryRemove(id, out var fileCard))
             {
                 res = fileCard?.StateInfo;
             }
+            Logger.Info($"Deleted file {id} / [rest files: {Conveyor.TotalFileCardCatalog.Count}]");
             return res == null ? NotFound() : Ok(res);
         }
 
@@ -126,6 +127,7 @@ namespace Server.Controllers
                         await WriteEvent(this.Response, fc.SessionId, new StateInfo(fc.FileId, historyState));
                     }
                 }
+                Task.Delay(200).Wait();
             }
         }
     }
