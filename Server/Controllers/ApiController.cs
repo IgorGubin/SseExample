@@ -90,7 +90,7 @@ namespace Server.Controllers
             {
                 res = fileCard?.StateInfo;
             }
-            return Ok();
+            return res == null ? NotFound() : Ok(res);
         }
 
 

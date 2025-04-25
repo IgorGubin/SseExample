@@ -85,25 +85,53 @@ namespace Client.Processing
                     if (fileState == FileCardStateEnum.Сompleted)
                     {
                         #region [Download]
-                        Logger.Info($"{_pref} - file {fid} - download simulate - Start {{ ---");
                         var srvDownlUrl = srvApiUrl + $"/download/{fid}";
                         using (var resp = await client.GetAsync(srvDownlUrl, HttpCompletionOption.ResponseHeadersRead))
                         {
-                            resp.EnsureSuccessStatusCode();
-                            using (var respStream = await resp.Content.ReadAsStreamAsync())
+                            try
                             {
-                                
+                                resp.EnsureSuccessStatusCode();
+                                var jsonString = await resp.Content.ReadAsStringAsync();
+                                if (jsonString != null)
+                                {
+                                    var stateInfo = JsonSerializer.Deserialize<StateInfo>(jsonString);
+                                    Logger.Info($"{_pref} - successfuly downloaded file: {stateInfo}");
+                                }
                             }
-                            resp.Content = null;
+                            catch (Exception ex)
+                            {
+                                Logger.Error(ex);
+                            }
+                            finally
+                            {
+                                resp.Content = null;
+                            }
                         }
-                        Logger.Info($"{_pref} - file {fid} - download simulate - End }} ---");
                         #endregion [Download]
 
                         #region [Delete]
-                        Logger.Info($"{_pref} - file {fid} - delete simulate - Start {{ ---");
                         var srvDeleteUrl = srvApiUrl + $"/delete/{fid}";
-                        await client.DeleteAsync(srvDownlUrl);
-                        Logger.Info($"{_pref} - file {fid} - delete simulate - End }} ---");
+                        using (var resp = await client.DeleteAsync(srvDeleteUrl))
+                        {
+                            try
+                            {
+                                resp.EnsureSuccessStatusCode();
+                                var jsonString = await resp.Content.ReadAsStringAsync();
+                                if (jsonString != null)
+                                {
+                                    var stateInfo = JsonSerializer.Deserialize<StateInfo>(jsonString);
+                                    Logger.Info($"{_pref} - successfuly deleted file: {stateInfo}");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Error(ex);
+                            }
+                            finally
+                            {
+                                resp.Content = null;
+                            }
+                        }
                         #endregion [Delete]
                     }
                 });
@@ -138,7 +166,6 @@ namespace Client.Processing
                     }
                     if (item.Data != null)
                     {
-                        Logger.Info($"{_pref} - got data:\r\nEventId: {item.EventId};\r\nEventType: {item.EventType}];\r\nEventData: {{{item.Data}}};");
                         var sessionId = item.EventId;
                         if (sessionId == _cfg.ClientSessionId)
                         {
@@ -151,6 +178,10 @@ namespace Client.Processing
                                     Logger.Info($"{_pref} - file \"{fileId}\" - state changed: {curState} -> {item.Data.State};");
                                 }
                             }
+                        }
+                        else
+                        {
+                            Logger.Info($"{_pref} - Error got data from another session:\r\nEventId: {item.EventId};\r\nEventType: {item.EventType}];\r\nEventData: {{{item.Data}}};");
                         }
                     }
                 }
