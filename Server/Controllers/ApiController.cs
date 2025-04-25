@@ -52,6 +52,7 @@ namespace Server.Controllers
                 }
             }
 
+            Logger.Info($"--- added: {successCount} / total: {Conveyor.TotalFileCardCatalog.Count}");
             return successCount;
         }
 
