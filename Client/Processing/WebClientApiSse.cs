@@ -95,8 +95,8 @@ namespace Client.Processing
         )
         {
             var task = Task.Factory.StartNew(async () => {
-                var srvStatesUrl = srvApiUrl + "/states";
                 var clientSessionId = _cfg.SessionData.SessionId;
+                var srvStatesUrl = srvApiUrl + $"/states/{clientSessionId}";
 
                 using var client = new HttpClient();
                 using var stream = await client.GetStreamAsync(srvStatesUrl);

@@ -46,8 +46,8 @@ namespace Server.Controllers
             return filesCount;
         }
 
-        [HttpGet("states")]
-        public async Task StatesStream(CancellationToken cancellation)
+        [HttpGet("states/{id}")]
+        public async Task StatesStream(string id, CancellationToken cancellation)
         {
             async Task WriteEvent<T>(HttpResponse response, string? id, T data)
             {
@@ -64,7 +64,7 @@ namespace Server.Controllers
             Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
             while (!cancellation.IsCancellationRequested)
             {
-                var fileCardArray = Conveyor.TotalFileCardCatalog.Values.Where(fc => fc?.StateChanges?.Any() ?? false).ToArray();
+                var fileCardArray = Conveyor.TotalFileCardCatalog.Values.Where(fc => (fc?.SessionId.Equals(id, StringComparison.OrdinalIgnoreCase) ?? false) && (fc?.StateChanges?.Any() ?? false)).ToArray();
 
                 foreach (var fc in fileCardArray)
                 {
