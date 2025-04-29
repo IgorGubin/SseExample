@@ -1,2 +1,2 @@
 # SseExample
-Example to demonstrate working sse technology by using sessionId
+Example to demonstrate using sessionId
