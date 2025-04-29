@@ -3,47 +3,20 @@
 using NLog;
 
 using Server.Enums;
+using Server.Interfaces;
 using Server.Model;
 using Server.Utilities;
 
 namespace Server.Processing
 {
-    internal class ConveyorItem
+    internal class ConveyorItem : IHandle
     {
         private static NLog.ILogger Logger = LogManager.GetCurrentClassLogger();
-
-        private readonly object objLock = new object();
-        private bool _isBusy = false;
-        private bool _isStarted = false;
 
         /// <summary>
         /// Entry queue
         /// </summary>
         public BlockingCollection<FileCard> In { get; } = new BlockingCollection<FileCard>();
-
-        protected bool IsStarted
-        {
-            get => _isStarted;
-            set
-            {
-                if (_isStarted != value)
-                    lock (objLock)
-                        if (_isStarted != value)
-                            _isStarted = value;
-            }
-        }
-
-        protected bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                if (_isBusy != value)
-                    lock (objLock)
-                        if (_isBusy != value)
-                            _isBusy = value;
-            }
-        }
 
         /// <summary>
         /// Starts the process of consuming the input queue.
@@ -52,7 +25,7 @@ namespace Server.Processing
         /// <returns></returns>
         public async Task HandleAsync(CancellationToken token)
         {
-            Func<FileCard, CancellationToken, Task> produceInToOut = (fc, t) =>
+            Func<FileCard, CancellationToken?, Task> produceInToOut = (fc, t) =>
             {
                 var res = new Task(() =>
                 {
@@ -64,21 +37,21 @@ namespace Server.Processing
                                 fc.State = Enums.FileCardStateEnum.New;
                                 break;
                             case Enums.FileCardStateEnum.InProcessing:
-                                Task.Delay(3000, t);
+                                Task.Delay(3000);
                                 fc.State = Enums.FileCardStateEnum.Сompleted;
                                 break;
                         }
                     }
-                }, t);
+                });
 
                 return res;
             };
 
-            await _utility.AttemptsAsync(stepAction: async (i) =>
-            {
+            //await _utility.AttemptsAsync(stepAction: async (i) =>
+            //{
                 // Starting the input queue consumption process
                 await Consumption(In, produceInToOut, _cfg.ConsumptionMaxParallelDegree, _cfg.WaitWhenAnyMs, token);
-            });
+            //});
         }
 
         /// <summary>
@@ -95,7 +68,7 @@ namespace Server.Processing
         /// </remarks>
         private async Task Consumption(
             BlockingCollection<FileCard> queue,
-            Func<FileCard, CancellationToken, Task> taskFactory,
+            Func<FileCard, CancellationToken?, Task> taskFactory,
             int maxParallelDegree,
             int waitWhenAnyMs,
             CancellationToken token
@@ -108,13 +81,15 @@ namespace Server.Processing
 
             var tasks = new Dictionary<Task, FileCard>();
 
-            while (token.IsCancellationRequested == false)
+            while (true)
             {
-                token.ThrowIfCancellationRequested();
+                if (token.IsCancellationRequested)
+                    break;
 
                 while (tasks.Count < maxParallelDegree)
                 {
-                    token.ThrowIfCancellationRequested();
+                    if (token.IsCancellationRequested)
+                        break;
 
                     if (queue.TryTake(out FileCard? fileCard))
                     { /* queue is not empty */
@@ -137,13 +112,10 @@ namespace Server.Processing
                     }
                 }
 
-                IsBusy = tasks.Any();
-                if (IsBusy && IsStarted == false) IsStarted = true;
-
                 var start = DateTime.Now;
                 while ((DateTime.Now - start).TotalMilliseconds < waitWhenAnyMs)
                 {
-                    var completedTask = await Task.WhenAny(tasks.Keys).ConfigureAwait(false);
+                    var completedTask = await Task.WhenAny(tasks.Keys).ConfigureAwait(true);
                     if (completedTask == null)
                         break;
 

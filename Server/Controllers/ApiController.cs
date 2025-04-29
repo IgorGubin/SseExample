@@ -103,7 +103,7 @@ namespace Server.Controllers
         /// <param name="cancellation"></param>
         /// <returns></returns>
         [HttpGet("states/{id}")]
-        public async Task StatesStream(string id, CancellationToken cancellation)
+        public async Task StatesStream(string id, CancellationToken token)
         {
             async Task WriteEvent<T>(HttpResponse response, string? id, T data)
             {
@@ -118,17 +118,24 @@ namespace Server.Controllers
             }
 
             Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
-            while (!cancellation.IsCancellationRequested)
-            { // todo: it is necessary to do refactoring to unload the processor.
-                var sessionDataArray = Conveyor.TotalFileCardCatalog.Values.Where(fc => (fc.SessionId.Equals(id, StringComparison.OrdinalIgnoreCase)) && (fc?.StateChanges?.Any() ?? false)).ToArray();
-                foreach (var fc in sessionDataArray)
+
+            var sessionId = id;
+            while (!token.IsCancellationRequested)
+            {
+                if (Conveyor.TryGetSessionChannel(sessionId, out var channel) && channel != null)
                 {
-                    while (fc?.StateChanges.TryDequeue(out var historyState) ?? false)
+                    try
                     {
-                        await WriteEvent(this.Response, fc.SessionId, new StateInfo(fc.FileId, historyState));
+                        await foreach (var stateInfo in channel.Reader.ReadAllAsync(token))
+                        {
+                            await WriteEvent(this.Response, sessionId, stateInfo);
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Conveyor.FileCardStateChanges.TryRemove(sessionId, out var _);
                     }
                 }
-                await Task.Delay(200);
             }
         }
     }

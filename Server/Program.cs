@@ -5,6 +5,7 @@ using Server.Enums;
 using Server.ActionsFilters;
 using Server.Utilities;
 using Server.Processing;
+using Server.Interfaces;
 
 namespace Server
 {
@@ -27,17 +28,8 @@ namespace Server
 
             var cts = new CancellationTokenSource();
 
-            Task.Factory.StartNew(async () =>
-            {
-                try
-                {
-                    await Conveyor.HandleAsync(cts.Token);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex);
-                }
-            });
+            //await Conveyor.HandleAsync(cts.Token);
+            Conveyor.HandleAsync(CancellationToken.None).WaitAsync(cts.Token);
 
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddCors();
@@ -45,6 +37,7 @@ namespace Server
             builder.Services.AddControllers(o => {
                 o.Filters.Add<HttpResponseExceptionsFilter>();
             });
+            builder.Services.AddSingleton<IHandle, ConveyorItem>();
 
             var app = builder.Build();
             app.MapControllers();

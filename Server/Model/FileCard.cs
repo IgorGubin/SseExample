@@ -1,10 +1,14 @@
-﻿using Server.Enums;
-using System.Collections.Concurrent;
+﻿using NLog;
+
+using Server.Enums;
+using Server.Processing;
 
 namespace Server.Model
 {
     internal class FileCard
     {
+        private static NLog.ILogger Logger = LogManager.GetCurrentClassLogger();
+
         private StateInfo _state = new();
 
         public FileCard(string? sessionId, string? fileId, FileCardStateEnum state = FileCardStateEnum.Nothing)
@@ -21,11 +25,6 @@ namespace Server.Model
         public StateInfo StateInfo => _state;
 
         /// <summary>
-        /// Queue of state changes history.
-        /// </summary>
-        public ConcurrentQueue<FileCardStateEnum> StateChanges { get; private set; } = new ConcurrentQueue<FileCardStateEnum>();
-
-        /// <summary>
         /// State of file.
         /// </summary>
         public FileCardStateEnum State
@@ -36,7 +35,14 @@ namespace Server.Model
                 if (_state.State != value)
                 {
                     _state.State = value;
-                    StateChanges.Enqueue(value);
+                    if (Conveyor.TryGetSessionChannel(SessionId, out var channel) && channel != null)
+                    {
+                        channel.Writer.TryWrite(new StateInfo(FileId, _state.State));
+                    }
+                    else
+                    {
+                        Logger.Error($"Not found channel of session {SessionId}");
+                    }
                 }
             }
         }
