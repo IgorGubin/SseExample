@@ -5,15 +5,13 @@ using Server.Enums;
 using Server.ActionsFilters;
 using Server.Utilities;
 using Server.Processing;
-using Server.Interfaces;
 
 namespace Server
 {
     internal class Program
     {
-        private static AppMainStatusEnum appStatus = AppMainStatusEnum.Running;
-
         private static readonly NLog.ILogger Logger = LogManager.GetCurrentClassLogger();
+        private static AppMainStatusEnum appStatus = AppMainStatusEnum.Running;
 
         private static void Main(string[] args)
         {
@@ -26,18 +24,13 @@ namespace Server
                       + $"\r\nUrl: \"{_cfg.Url}\""
                       + $"\r\n{new string('=', 33)}");
 
-            var cts = new CancellationTokenSource();
-
-            //await Conveyor.HandleAsync(cts.Token);
-            Conveyor.HandleAsync(CancellationToken.None).WaitAsync(cts.Token);
-
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddCors();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddControllers(o => {
                 o.Filters.Add<HttpResponseExceptionsFilter>();
             });
-            builder.Services.AddSingleton<IHandle, ConveyorItem>();
+            builder.Services.AddHostedService<CoveyorHostedService>();
 
             var app = builder.Build();
             app.MapControllers();

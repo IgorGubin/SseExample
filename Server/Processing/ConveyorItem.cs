@@ -47,11 +47,11 @@ namespace Server.Processing
                 return res;
             };
 
-            //await _utility.AttemptsAsync(stepAction: async (i) =>
-            //{
+            await _utility.AttemptsAsync(stepAction: async (i) =>
+            {
                 // Starting the input queue consumption process
                 await Consumption(In, produceInToOut, _cfg.ConsumptionMaxParallelDegree, _cfg.WaitWhenAnyMs, token);
-            //});
+            });
         }
 
         /// <summary>

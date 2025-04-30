@@ -2,6 +2,7 @@
 using System.Threading.Channels;
 
 using NLog;
+
 using Server.Interfaces;
 using Server.Model;
 
@@ -61,13 +62,7 @@ namespace Server.Processing
         /// <returns></returns>
         internal static async Task HandleAsync(CancellationToken token)
         {
-            await new TaskFactory().StartNew(async () => {
-                while (!token.IsCancellationRequested)
-                {
-                    await ConveyorItemSingleton.HandleAsync(token);
-                    await Task.Delay(100);
-                }
-            });
+            await new TaskFactory().StartNew(async () => { await ConveyorItemSingleton.HandleAsync(token); });
         }
     }
 }

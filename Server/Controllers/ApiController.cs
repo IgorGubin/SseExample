@@ -36,6 +36,8 @@ namespace Server.Controllers
             if (!data.Files.Any())
                 throw new ApplicationException("No files received.");
 
+            Conveyor.TryGetSessionChannel(data.SessionId, out var _);
+
             for (var i = 0; i < data.Files.Count; i++)
             {
                 var fileId = data.Files[i];
@@ -48,6 +50,7 @@ namespace Server.Controllers
                 }
                 catch (Exception ex)
                 {
+                    Conveyor.FileCardStateChanges.TryRemove(data.SessionId, out var _);
                     Logger.Error(ex, $"Error by upload file {fileId} in session {data.SessionId}.");
                 }
             }
