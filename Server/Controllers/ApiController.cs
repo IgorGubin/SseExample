@@ -121,6 +121,7 @@ namespace Server.Controllers
             }
 
             Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
+            Response.Headers.Append("Cache-Control", "no-cache");
 
             var sessionId = id;
             while (!token.IsCancellationRequested)
