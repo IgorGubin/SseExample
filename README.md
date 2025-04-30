@@ -7,6 +7,7 @@ This example demonstrate the using server sent events (sse) technology when impl
 - downloading files from the server in the Completed state and sending a command to the server to delete this file after successful download
 
 > Server is implemented by using MVC technology.
+> 
 > Working with real files is simulated since the main goal of the example was to test the functionality of using sse within a specific client session,
 for which the GET method on the server, participating in sse, accepts the sessionId parameter.
 
