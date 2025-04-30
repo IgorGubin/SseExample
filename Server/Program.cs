@@ -11,12 +11,19 @@ namespace Server
     internal class Program
     {
         private static readonly NLog.ILogger Logger = LogManager.GetCurrentClassLogger();
+
         private static AppMainStatusEnum appStatus = AppMainStatusEnum.Running;
+
+        private static DateTime _appStart;
 
         private static void Main(string[] args)
         {
+            _appStart = DateTime.Now;
+
             LogManager.ResumeLogging();
             LogManager.Configuration = new NLogLoggingConfiguration(_cfg.GetNlogConfiguration());
+
+            Logger.Info($"\r\n{new string('*', 33)}\r\n------->>> Server - Start {"{{{"} <<<-------");
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 
@@ -33,15 +40,37 @@ namespace Server
             builder.Services.AddHostedService<CoveyorHostedService>();
 
             var app = builder.Build();
+
             app.MapControllers();
-            app.Run();
+            try
+            {
+                app.Run();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                Environment.ExitCode = 1;
+            }
+            finally
+            {
+                appStatus = AppMainStatusEnum.Completed;
+                try { LogManager.Shutdown(); } catch { }
+            }
         }
 
         private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            var ex = (e.ExceptionObject as Exception) ?? new ApplicationException("Fatal Error!");
-            Logger.Fatal(ex);
-            LogManager.Shutdown();
+            if (appStatus != AppMainStatusEnum.Completed || e.ExceptionObject is not NLogRuntimeException)
+            {
+                try
+                {
+                    var ex = (e.ExceptionObject as Exception) ?? new ApplicationException("Fatal Error!");
+                    Logger.Fatal(ex); // output to file only
+                }
+                catch { }
+            }
+
+            try { LogManager.Shutdown(); } catch { }
             Environment.Exit(2);
         }
     }

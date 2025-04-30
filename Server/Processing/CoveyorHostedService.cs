@@ -14,7 +14,7 @@ namespace Server.Processing
         {
             try
             {
-                await Conveyor.HandleAsync(CancellationToken.None);
+                await Conveyor.HandleAsync(token);
             }
             catch (Exception ex)
             {
