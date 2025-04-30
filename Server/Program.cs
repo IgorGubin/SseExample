@@ -60,16 +60,11 @@ namespace Server
 
         private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+            var ex = (e.ExceptionObject as Exception) ?? new ApplicationException("Fatal Error!");
             if (appStatus != AppMainStatusEnum.Completed || e.ExceptionObject is not NLogRuntimeException)
             {
-                try
-                {
-                    var ex = (e.ExceptionObject as Exception) ?? new ApplicationException("Fatal Error!");
-                    Logger.Fatal(ex); // output to file only
-                }
-                catch { }
+                try { Logger.Fatal(ex); } catch { }
             }
-
             try { LogManager.Shutdown(); } catch { }
             Environment.Exit(2);
         }
