@@ -25,7 +25,7 @@ namespace Server.Processing
         /// <returns></returns>
         public async Task HandleAsync(CancellationToken token)
         {
-            Func<FileCard, CancellationToken?, Task> produceInToOut = (fc, t) =>
+            Func<FileCard, CancellationToken, Task> produceInToOut = (fc, t) =>
             {
                 var res = new Task(() =>
                 {
@@ -68,7 +68,7 @@ namespace Server.Processing
         /// </remarks>
         private async Task Consumption(
             BlockingCollection<FileCard> queue,
-            Func<FileCard, CancellationToken?, Task> taskFactory,
+            Func<FileCard, CancellationToken, Task> taskFactory,
             int maxParallelDegree,
             int waitWhenAnyMs,
             CancellationToken token
@@ -113,9 +113,9 @@ namespace Server.Processing
                 }
 
                 var start = DateTime.Now;
-                while ((DateTime.Now - start).TotalMilliseconds < waitWhenAnyMs)
+                while (tasks.Count > 0 && (DateTime.Now - start).TotalMilliseconds < waitWhenAnyMs)
                 {
-                    var completedTask = await Task.WhenAny(tasks.Keys).ConfigureAwait(true);
+                    var completedTask = await Task.WhenAny(tasks.Keys);
                     if (completedTask == null)
                         break;
 
