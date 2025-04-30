@@ -38,19 +38,19 @@ namespace Client.Processing
 
             using (var client = new HttpClient())
             {
-                var sessionData = new {sessionId = _cfg.ClientSessionId, files = new List<string>()};
+                var files = new List<string>();
                 #region [Upload]
                 Logger.Info($"{_pref} - upload simulate - Start {{ ---");
-                var srvUploadUrl = srvApiUrl + "/upload";
+                var srvUploadUrl = srvApiUrl + $"/upload/{sessionId}";
                 for (var i = 0; i < 50; i++)
                 {
                     var fileId = Guid.NewGuid().ToString("N");
-                    sessionData.files.Add(fileId);
+                    files.Add(fileId);
                     _waitStates.TryAdd(fileId, FileCardStateEnum.Nothing);
                 }
 
-                using var data = JsonContent.Create(sessionData);
-                using (var resp = await client.PostAsync(srvUploadUrl, data))
+                using var jsonFiles = JsonContent.Create(files);
+                using (var resp = await client.PostAsync(srvUploadUrl, jsonFiles))
                 {
                     try
                     {
@@ -205,7 +205,7 @@ namespace Client.Processing
                         }
                         else
                         {
-                            Logger.Info($"{_pref} --- Error got data from another session:\r\nEventId: {item.EventId};\r\nEventType: {item.EventType}];\r\nEventData: {{{item.Data}}};");
+                            Logger.Info($"{_pref} --- Error got jsonFiles from another session:\r\nEventId: {item.EventId};\r\nEventType: {item.EventType}];\r\nEventData: {{{item.Data}}};");
                         }
                     }
                 }

@@ -27,31 +27,33 @@ namespace Server.Controllers
         /// <summary>
         /// Simulate files upload
         /// </summary>
+        /// <param name="Id">SessionId</param>
         /// <param name="data">Object of type SessionData</param>
         /// <returns>Received quantity of files</returns>
-        [HttpPost("upload")]
-        public async Task<int> Upload([FromBody] SessionData data)
+        [HttpPost("upload/{id}")]
+        public async Task<int> Upload(string Id, [FromBody] List<string> files)
         {
             int successCount = 0;
-            if (!data.Files.Any())
+            if (!files.Any())
                 throw new ApplicationException("No files received.");
 
-            Conveyor.TryGetSessionChannel(data.SessionId, out var _);
+            var sessionId = Id;
+            Conveyor.TryGetSessionChannel(sessionId, out var _);
 
-            for (var i = 0; i < data.Files.Count; i++)
+            for (var i = 0; i < files.Count; i++)
             {
-                var fileId = data.Files[i];
+                var fileId = files[i];
                 try
                 {
-                    var fc = new FileCard(data.SessionId, fileId, FileCardStateEnum.New);
+                    var fc = new FileCard(sessionId, fileId, FileCardStateEnum.New);
                     Conveyor.TotalFileCardCatalog.TryAdd(fileId, fc);
                     Conveyor.ConveyorItemSingleton.In.Add(fc);
                     Interlocked.Increment(ref successCount);
                 }
                 catch (Exception ex)
                 {
-                    Conveyor.FileCardStateChanges.TryRemove(data.SessionId, out var _);
-                    Logger.Error(ex, $"Error by upload file {fileId} in session {data.SessionId}.");
+                    Conveyor.FileCardStateChanges.TryRemove(sessionId, out var _);
+                    Logger.Error(ex, $"Error by upload file {fileId} in session {sessionId}.");
                 }
             }
 
