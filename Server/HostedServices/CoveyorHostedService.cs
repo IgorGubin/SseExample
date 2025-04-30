@@ -1,6 +1,7 @@
 ﻿using NLog;
+using Server.Processing;
 
-namespace Server.Processing
+namespace Server.HostedServices
 {
     public class CoveyorHostedService : BackgroundService
     {

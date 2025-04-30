@@ -4,7 +4,7 @@ using NLog.Extensions.Logging;
 using Server.Enums;
 using Server.ActionsFilters;
 using Server.Utilities;
-using Server.Processing;
+using Server.HostedServices;
 
 namespace Server
 {
@@ -23,13 +23,7 @@ namespace Server
             LogManager.ResumeLogging();
             LogManager.Configuration = new NLogLoggingConfiguration(_cfg.GetNlogConfiguration());
 
-            Logger.Info($"\r\n{new string('*', 33)}\r\n------->>> Server - Start {"{{{"} <<<-------");
-
             AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-
-            Logger.Info($"\r\n{new string('=', 33)}"
-                      + $"\r\nUrl: \"{_cfg.Url}\""
-                      + $"\r\n{new string('=', 33)}");
 
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddCors();
@@ -37,7 +31,13 @@ namespace Server
             builder.Services.AddControllers(o => {
                 o.Filters.Add<HttpResponseExceptionsFilter>();
             });
+            builder.Services.Configure<HostOptions>(options =>
+            {
+                options.ServicesStartConcurrently = true;
+                options.ServicesStopConcurrently = true;
+            });
             builder.Services.AddHostedService<CoveyorHostedService>();
+            builder.Services.AddHostedService<LifecycleHostedService>();
 
             var app = builder.Build();
 
@@ -54,18 +54,18 @@ namespace Server
             finally
             {
                 appStatus = AppMainStatusEnum.Completed;
-                try { LogManager.Shutdown(); } catch { }
+                LogManager.Shutdown();
             }
         }
 
         private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             var ex = (e.ExceptionObject as Exception) ?? new ApplicationException("Fatal Error!");
-            if (appStatus != AppMainStatusEnum.Completed || e.ExceptionObject is not NLogRuntimeException)
+            if (appStatus != AppMainStatusEnum.Completed || ex is not NLogRuntimeException)
             {
-                try { Logger.Fatal(ex); } catch { }
+                Logger.Fatal(ex);
             }
-            try { LogManager.Shutdown(); } catch { }
+            LogManager.Shutdown();
             Environment.Exit(2);
         }
     }
