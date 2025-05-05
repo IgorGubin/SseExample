@@ -1,0 +1,13 @@
+﻿################################################################################
+# Данный GITIGNORE-файл был автоматически создан Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Client/bin
+/Client/obj
+/Server/bin
+/Server/obj
+*.user
+*.log
+/Client/Properties/PublishProfiles/*.user
+/Server/Properties/PublishProfiles/*.user
